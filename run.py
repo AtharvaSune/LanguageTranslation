@@ -3,6 +3,7 @@ import torch.optim as optim
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import random
+import pickle as pkl
 
 from model import Encoder, Decoder
 from train import trainNormal
@@ -13,7 +14,6 @@ from config import SOS_token, EOS_token, DEVICE
 
 def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
     input_lang, output_lang, pairs = prepareData(lang1, lang2, reverse)
-    rawdataset = CustomDataSet(input_lang, output_lang, pairs)
 
     enc = Encoder(input_lang.n_words, hidden_size).to(DEVICE)
     dec = Decoder(output_lang.n_words, hidden_size).to(DEVICE)
@@ -24,8 +24,13 @@ def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
 
     for ep in range(n_epochs):
         total_loss = 0
-        training_pairs = [rawdataset.tensorsFromPair(random.choice(pairs))
-                          for i in range(batch_size)]
+        training_pairs = random.choices(pairs, k=batch_size)
+
+        for i in range(len(training_pairs)):
+            training_pairs[i][0] = input_lang.tensorFromSentence(
+                                            training_pairs[i][0])
+            training_pairs[i][1] = output_lang.tensorFromSentence(
+                                            training_pairs[i][1])
 
         for batch, (input_tensor, target_tensor) in enumerate(training_pairs):
             loss = trainNormal(enc, dec, input_tensor, target_tensor,
@@ -35,6 +40,9 @@ def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
         if (ep+1) % plot_every == 0:
             plot_losses.append(total_loss/plot_every)
             print(f"ep: {ep+1} loss: {total_loss/plot_every}")
+
+    torch.save(enc.state_dict(), "encoder.pth")
+    torch.save(dec.state_dict(), "decoder.pth")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,9 @@ import unicodedata
 import string
 import re
 import random
-from config import MAX_LENGTH, ENG_PREFIXES
+from config import MAX_LENGTH, ENG_PREFIXES, DEVICE
+import torch
+import torch.nn as nn
 
 
 class Lang(object):
@@ -34,6 +36,15 @@ class Lang(object):
 
     def __len__(self):
         return self.n_words
+
+    def indexFromSentence(self, sentence):
+        return [self.getIndex(word) for word in sentence.split(' ')]
+
+    def tensorFromSentence(self, sentence):
+        indexes = self.indexFromSentence(sentence)
+        indexes.append(EOS_token)
+        return torch.tensor(indexes, dtype=torch.long, device=DEVICE)\
+            .view(-1, 1)
 
 
 def unicodetoASCII(s):
