@@ -27,7 +27,7 @@ class Lang(object):
             self.word2count[word] += 1
 
     def getIndex(self, word):
-        return self.word2index[word]
+        return int(self.word2index[word])
 
     def getWord(self, index):
         return self.index2word

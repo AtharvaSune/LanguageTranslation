@@ -24,7 +24,7 @@ def trainNormal(enc, dec, input_tensor, target_tensor, optim_enc, optim_dec,
     decoder_hidden = encoder_hidden
 
     for di in range(target_length):
-        decoder_output, decoder_hidden = dec(encoder_outputs,
+        decoder_output, decoder_hidden = dec(decoder_input,
                                              decoder_hidden)
         loss += criterion(decoder_output, target_tensor[di])
         decoder_input = target_tensor[di]

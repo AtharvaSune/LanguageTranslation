@@ -27,7 +27,7 @@ def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
         training_pairs = [rawdataset.tensorsFromPair(random.choice(pairs))
                           for i in range(batch_size)]
 
-        for input_tensor, target_tensor in training_pairs:
+        for batch, (input_tensor, target_tensor) in enumerate(training_pairs):
             loss = trainNormal(enc, dec, input_tensor, target_tensor,
                                optim_enc, optim_dec, criterion)
             total_loss += loss

@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\athar\\anaconda3\\envs\\PyTorch\\python.exe",
+    "python.pythonPath": "/home/atharva/PyTorch/bin/python",
     "python.linting.pylintEnabled": false,
     "python.linting.pycodestyleEnabled": true,
     "python.linting.enabled": true
