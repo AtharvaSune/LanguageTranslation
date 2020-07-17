@@ -4,12 +4,23 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import random
 import pickle as pkl
+import matplotlib.pyplot as plt
 
-from model import Encoder, Decoder
+from model import Encoder, Decoder, AttentionDecoder
 from train import trainNormal
-from data import CustomDataSet
 from preprocess import prepareData
 from config import SOS_token, EOS_token, DEVICE
+
+
+def plot(losses, n_epochs, plot_every):
+    x = list(range(1, n_epochs+1, plot_every))
+    y = losses
+    plt.plot(x, y)
+    plt.xlabel("epochs")
+    plt.ylabel("loss")
+    plt.title("Loss vs Epoch")
+    plt.savefig("loss.png")
+    plt.show()
 
 
 def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
@@ -27,10 +38,11 @@ def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
         training_pairs = random.choices(pairs, k=batch_size)
 
         for i in range(len(training_pairs)):
-            training_pairs[i][0] = input_lang.tensorFromSentence(
+            inp = input_lang.tensorFromSentence(
                                             training_pairs[i][0])
-            training_pairs[i][1] = output_lang.tensorFromSentence(
+            tar = output_lang.tensorFromSentence(
                                             training_pairs[i][1])
+            training_pairs[i] = [inp, tar]
 
         for batch, (input_tensor, target_tensor) in enumerate(training_pairs):
             loss = trainNormal(enc, dec, input_tensor, target_tensor,
@@ -41,8 +53,44 @@ def main(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every):
             plot_losses.append(total_loss/plot_every)
             print(f"ep: {ep+1} loss: {total_loss/plot_every}")
 
+    plot(plot_losses, n_epochs, plot_every)
     torch.save(enc.state_dict(), "encoder.pth")
     torch.save(dec.state_dict(), "decoder.pth")
+
+
+def attn(lang1, lang2, reverse, batch_size, n_epochs, hidden_size, plot_every,
+         dropout_p):
+    input_lang, output_lang, pairs = prepareData(lang1, lang2)
+
+    enc = Encoder(input_lang.n_words, hidden_size)
+    dec = AttentionDecoder(output_lang.n_words, hidden_size, dropout_p)
+    optim_enc = optim.Adam(enc.parameters())
+    optim_dec = optim.Adam(dec.parameters())
+    plot_losses = []
+
+    for ep in range(n_epochs):
+        total_loss = 0
+        training_pairs = random.choices(pairs, k=batch_size)
+
+        for i in range(len(training_pairs)):
+            inp = input_lang.tensorFromSentence(
+                                            training_pairs[i][0])
+            tar = output_lang.tensorFromSentence(
+                                            training_pairs[i][1])
+            training_pairs[i] = [inp, tar]
+
+        for batch, (input_tensor, target_tensor) in enumerate(training_pairs):
+            loss = trainNormal(enc, dec, input_tensor, target_tensor,
+                               optim_enc, optim_dec, criterion)
+            total_loss += loss
+
+        if (ep+1) % plot_every == 0:
+            plot_losses.append(total_loss/plot_every)
+            print(f"ep: {ep+1} loss: {total_loss/plot_every}")
+
+    plot(plot_losses, n_epochs, plot_every)
+    torch.save(enc.state_dict(), "att_encoder.pth")
+    torch.save(dec.state_dict(), "att_decoder.pth")
 
 
 if __name__ == "__main__":

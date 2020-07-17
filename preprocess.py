@@ -2,7 +2,7 @@ import unicodedata
 import string
 import re
 import random
-from config import MAX_LENGTH, ENG_PREFIXES, DEVICE
+from config import MAX_LENGTH, ENG_PREFIXES, DEVICE, EOS_token, SOS_token
 import torch
 import torch.nn as nn
 
